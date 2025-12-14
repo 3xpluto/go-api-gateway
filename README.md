@@ -1,4 +1,6 @@
 # go-api-gateway
+[![CI](https://github.com/3xpluto/go-api-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/3xpluto/go-api-gateway/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 A production-minded **HTTP API gateway** in Go with **JWKS (JWT) auth**, **per-route rate limiting**, **per-route concurrency limits**, a **circuit breaker**, structured logging, Prometheus metrics, and **admin debug endpoints**.
 
