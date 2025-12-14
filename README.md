@@ -210,4 +210,4 @@ See `docs/ARCHITECTURE.md` for details.
 
 ## License
 
-MIT (or your preferred license). Add a `LICENSE` file if you haven’t yet.
+MIT.
