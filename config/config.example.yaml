@@ -1,0 +1,40 @@
+server:
+  addr: ":8080"
+
+auth:
+  mode: "hmac"
+  hmac_secret: "dev-secret" # HS256 shared secret (v1). Rotate in production.
+
+rate_limit:
+  backend: "memory"          # "redis" or "memory"
+  redis:
+    addr: "127.0.0.1:6379"
+    password: ""
+    db: 0
+  memory:
+    cleanup_seconds: 60
+    ttl_seconds: 300
+
+routes:
+  - name: "users"
+    match:
+      path_prefix: "/api/users/"
+    upstream: "http://127.0.0.1:9001"
+    strip_prefix: "/api"
+    auth_required: true
+    rate_limit:
+      enabled: true
+      rps: 5
+      burst: 10
+      scope: "user"     # "user" or "ip"
+
+  - name: "public"
+    match:
+      path_prefix: "/public/"
+    upstream: "http://127.0.0.1:9002"
+    auth_required: false
+    rate_limit:
+      enabled: true
+      rps: 20
+      burst: 40
+      scope: "ip"
