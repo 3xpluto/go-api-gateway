@@ -65,7 +65,7 @@ func BuildProxy(up *url.URL, transport http.RoundTripper) *httputil.ReverseProxy
 		req.Host = up.Host
 	}
 
-	p.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+	p.ErrorHandler = func(w http.ResponseWriter, _ *http.Request, err error) {
 		msg := ""
 		code := http.StatusBadGateway
 		if err != nil {

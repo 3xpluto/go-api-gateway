@@ -200,7 +200,11 @@ func main() {
 	// ---- HTTP server / mux
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte("ok")) })
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		if _, err := w.Write([]byte("ok")); err != nil {
+			return
+		}
+	})
 
 	ipr := mw.IPResolver{}
 	startedAt := time.Now()
@@ -216,7 +220,7 @@ func main() {
 		return h
 	}
 
-	mux.Handle("/-/status", wrapAdmin("admin_status", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/-/status", wrapAdmin("admin_status", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		info, _ := debug.ReadBuildInfo()
 		goVer := ""
 		if info != nil {
@@ -235,7 +239,7 @@ func main() {
 		})
 	})))
 
-	mux.Handle("/-/routes", wrapAdmin("admin_routes", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/-/routes", wrapAdmin("admin_routes", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		type outRoute struct {
 			Name           string `json:"name"`
 			PathPrefix     string `json:"path_prefix"`
@@ -277,7 +281,7 @@ func main() {
 		_ = json.NewEncoder(w).Encode(out)
 	})))
 
-	mux.Handle("/-/auth", wrapAdmin("admin_auth", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/-/auth", wrapAdmin("admin_auth", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		out := map[string]any{
 			"mode": cfg.Auth.Mode,
 		}
@@ -288,7 +292,7 @@ func main() {
 		_ = json.NewEncoder(w).Encode(out)
 	})))
 
-	mux.Handle("/-/limits", wrapAdmin("admin_limits", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/-/limits", wrapAdmin("admin_limits", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		rows := make([]map[string]any, 0, len(cfg.Routes))
 		for _, rc := range cfg.Routes {
 			row := map[string]any{"route": rc.Name}

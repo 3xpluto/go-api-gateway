@@ -148,7 +148,7 @@ func TestGateway_JWKS_Auth_And_RateLimit(t *testing.T) {
 
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte("ok")) })
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte("ok")) })
 
 	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		route := rtr.Match(r.URL.Path)
@@ -265,10 +265,9 @@ func TestGateway_JWKS_Auth_And_RateLimit(t *testing.T) {
 	}
 }
 
-// NEW: Concurrency limiter integration test (expects 503 too_busy)
 func TestGateway_ConcurrencyLimit_TooBusy(t *testing.T) {
 	// Slow upstream so requests overlap in-flight.
-	up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		time.Sleep(150 * time.Millisecond)
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
@@ -393,7 +392,7 @@ func TestGateway_CircuitBreaker_Opens_And_Closes(t *testing.T) {
 	var calls int32
 
 	// Upstream fails twice (500), then succeeds (200).
-	up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		n := atomic.AddInt32(&calls, 1)
 		if n <= 2 {
 			http.Error(w, "boom", http.StatusInternalServerError)

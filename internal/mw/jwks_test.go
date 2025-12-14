@@ -34,7 +34,7 @@ func TestJWKSValidator_ValidToken(t *testing.T) {
 		},
 	}
 
-	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(jwks)
 	}))
@@ -89,7 +89,7 @@ func TestJWKSValidator_IssuerMismatch(t *testing.T) {
 			},
 		},
 	}
-	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_ = json.NewEncoder(w).Encode(jwks)
 	}))
 	defer s.Close()
@@ -124,7 +124,7 @@ func TestJWKSValidator_AudienceMismatch(t *testing.T) {
 			},
 		},
 	}
-	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_ = json.NewEncoder(w).Encode(jwks)
 	}))
 	defer s.Close()

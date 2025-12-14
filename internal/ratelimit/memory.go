@@ -52,7 +52,7 @@ func (m *MemoryLimiter) gcLoop() {
 	}
 }
 
-func (m *MemoryLimiter) Allow(ctx context.Context, key string, rps float64, burst float64, cost float64) (Decision, error) {
+func (m *MemoryLimiter) Allow(_ context.Context, key string, rps float64, burst float64, cost float64) (Decision, error) {
 	m.mu.Lock()
 	e := m.m[key]
 	if e == nil {
