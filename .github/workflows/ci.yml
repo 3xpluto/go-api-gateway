@@ -15,10 +15,16 @@ jobs:
           go-version: "stable"  
           cache: true
 
-      - name: Format (gofmt)
+      - name: gofmt (tracked files only)
         run: |
-          gofmt -w .
-          git diff --exit-code
+            files=$(git ls-files '*.go' | xargs gofmt -l)
+            if [ -n "$files" ]; then
+              echo "gofmt needed on:"
+              echo "$files"
+              exit 1
+            fi
+
+
 
       - name: Vet
         run: go vet ./...
