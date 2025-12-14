@@ -4,68 +4,85 @@ on:
   push:
   pull_request:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  ci:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v5
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          go-version: "stable"  
+          go-version-file: go.mod
           cache: true
 
-      - name: gofmt (tracked files only)
+      - name: Versions (debug)
+        shell: bash
         run: |
-            files=$(git ls-files '*.go' | xargs gofmt -l)
-            if [ -n "$files" ]; then
-              echo "gofmt needed on:"
-              echo "$files"
-              exit 1
-            fi
+          set -euo pipefail
+          go version
+          go env GOPATH GOMOD
 
+      - name: gofmt (tracked files only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=$(git ls-files '*.go' | xargs -r gofmt -l)
+          if [ -n "$files" ]; then
+            echo "gofmt needed on:"
+            echo "$files"
+            exit 1
+          fi
 
-
-      - name: Vet
+      - name: go vet
         run: go vet ./...
 
-      - name: Test
+      - name: go test
         run: go test ./... -count=1
 
-      - name: Race (linux)
+      - name: go test (race)
         run: go test ./... -race -count=1
 
-      - name: Coverage
+      - name: Install linters (compiled with this Go)
+        shell: bash
         run: |
+          set -euo pipefail
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Linter versions (debug)
+        shell: bash
+        run: |
+          set -euo pipefail
+          which staticcheck
+          staticcheck --version || true
+          which golangci-lint
+          golangci-lint --version
+
+      - name: staticcheck
+        run: staticcheck ./...
+
+      - name: golangci-lint
+        run: golangci-lint run ./... --timeout=5m
+
+      - name: Coverage
+        shell: bash
+        run: |
+          set -euo pipefail
           go test ./... -count=1 -coverpkg=./... -coverprofile=coverage.out
-          go tool cover -func=coverage.out
+          go tool cover -func=coverage.out | tee coverage.txt
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
           name: coverage
-          path: coverage.out
-
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "stable"
-          cache: true
-
-      - name: Install staticcheck
-        run: go install honnef.co/go/tools/cmd/staticcheck@latest
-
-      - name: Staticcheck
-        run: staticcheck ./...
-
-      - name: Install golangci-lint
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
-            | sh -s -- -b $(go env GOPATH)/bin v1.60.3
-
-      - name: golangci-lint
-        run: golangci-lint run ./... --timeout=5m
+          path: |
+            coverage.out
+            coverage.txt
