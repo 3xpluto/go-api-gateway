@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/3xpluto/go-api-gateway/internal/httpx"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Metrics struct {

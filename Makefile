@@ -1,13 +1,13 @@
-.PHONY: fmt test run redis
+.PHONY: fmt test vet run
 
 fmt:
 	gofmt -w .
 
+vet:
+	go vet ./...
+
 test:
 	go test ./...
-
-redis:
-	docker compose up -d
 
 run:
 	go run ./cmd/gateway -config ./config/config.example.yaml

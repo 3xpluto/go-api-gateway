@@ -3,11 +3,11 @@ package ratelimit
 import "context"
 
 type Decision struct {
-	Allowed            bool
-	RetryAfterSeconds  int
-	Remaining          float64
-	LimitRPS           float64
-	Burst              float64
+	Allowed           bool
+	RetryAfterSeconds int
+	Remaining         float64
+	LimitRPS          float64
+	Burst             float64
 }
 
 type Limiter interface {

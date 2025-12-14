@@ -14,8 +14,9 @@ type subjectKeyType string
 const subjectKey subjectKeyType = "sub"
 
 type Authenticator struct {
-	Mode       string // "hmac"
+	Mode       string // "hmac" | "jwks"
 	HMACSecret []byte
+	JWKS       *JWKSValidator
 }
 
 func (a Authenticator) ValidateBearer(r *http.Request) (string, error) {
@@ -25,21 +26,32 @@ func (a Authenticator) ValidateBearer(r *http.Request) (string, error) {
 	}
 	tokStr := strings.TrimSpace(strings.TrimPrefix(authz, "Bearer "))
 
-	tok, err := jwt.Parse(tokStr, func(token *jwt.Token) (any, error) {
-		if a.Mode != "hmac" {
-			return nil, errors.New("unsupported auth mode")
+	switch strings.ToLower(strings.TrimSpace(a.Mode)) {
+	case "jwks":
+		if a.JWKS == nil {
+			return "", errors.New("jwks validator not configured")
 		}
+		return a.JWKS.Validate(r.Context(), tokStr)
+	case "hmac", "":
+		return a.validateHMAC(tokStr)
+	default:
+		return "", errors.New("unsupported auth mode")
+	}
+}
+
+func (a Authenticator) validateHMAC(tokStr string) (string, error) {
+	claims := jwt.MapClaims{}
+	parser := jwt.NewParser(
+		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
+	)
+	tok, err := parser.ParseWithClaims(tokStr, claims, func(token *jwt.Token) (any, error) {
 		if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
 			return nil, errors.New("unexpected jwt alg")
 		}
 		return a.HMACSecret, nil
 	})
-	if err != nil || !tok.Valid {
+	if err != nil || tok == nil || !tok.Valid {
 		return "", errors.New("invalid token")
-	}
-	claims, ok := tok.Claims.(jwt.MapClaims)
-	if !ok {
-		return "", errors.New("invalid claims")
 	}
 	sub, _ := claims["sub"].(string)
 	if sub == "" {

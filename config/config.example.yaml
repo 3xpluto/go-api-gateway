@@ -1,12 +1,35 @@
 server:
   addr: ":8080"
+  # Only trust X-Forwarded-For from these CIDRs.
+  # If empty, the gateway will ignore XFF and use RemoteAddr.
+  trusted_proxies: ["127.0.0.1/32"]
+  max_header_bytes: 1048576     # 1 MiB
+  max_body_bytes: 1048576       # 1 MiB
+  read_header_timeout_seconds: 5
+  read_timeout_seconds: 15
+  write_timeout_seconds: 60
+  idle_timeout_seconds: 60
+
+upstream:
+  dial_timeout_seconds: 5
+  tls_handshake_timeout_seconds: 5
+  response_header_timeout_seconds: 15
+  idle_conn_timeout_seconds: 90
+  max_idle_conns: 100
+  max_idle_conns_per_host: 20
 
 auth:
-  mode: "hmac"
-  hmac_secret: "dev-secret" # HS256 shared secret (v1). Rotate in production.
+  mode: "jwks"
+  jwks:
+    url: "http://127.0.0.1:9009/.well-known/jwks.json"
+    issuers: ["http://127.0.0.1:9009"]
+    audiences: ["apigw"]
+    cache_ttl_seconds: 300
+    http_timeout_seconds: 3
+    leeway_seconds: 30
 
 rate_limit:
-  backend: "memory"          # "redis" or "memory"
+  backend: "memory"         # "redis" or "memory"
   redis:
     addr: "127.0.0.1:6379"
     password: ""
@@ -26,15 +49,31 @@ routes:
       enabled: true
       rps: 5
       burst: 10
-      scope: "user"     # "user" or "ip"
+      scope: "user"
+    concurrency:
+      max_in_flight: 50
+    circuit_breaker:
+      enabled: true
+      failure_threshold: 5
+      open_seconds: 10
+      half_open_max_in_flight: 1
+
 
   - name: "public"
     match:
       path_prefix: "/public/"
-    upstream: "http://127.0.0.1:9002"
+    upstream: "http://127.0.0.1:9999"
     auth_required: false
     rate_limit:
       enabled: true
       rps: 20
       burst: 40
       scope: "ip"
+    concurrency:
+      max_in_flight: 50
+    circuit_breaker:
+      enabled: true
+      failure_threshold: 5
+      open_seconds: 10
+      half_open_max_in_flight: 1
+

@@ -1,7 +1,7 @@
 package proxy
 
 import (
-	"errors"
+	"encoding/json"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -32,14 +32,19 @@ type Router struct {
 
 func New(routes []Route) (*Router, error) {
 	if len(routes) == 0 {
-		return nil, errors.New("no routes")
+		return nil, ErrNoRoutes
 	}
-	// longest prefix match: sort desc by prefix length
 	sort.Slice(routes, func(i, j int) bool {
 		return len(routes[i].PathPrefix) > len(routes[j].PathPrefix)
 	})
 	return &Router{routes: routes}, nil
 }
+
+var ErrNoRoutes = &errString{s: "no routes"}
+
+type errString struct{ s string }
+
+func (e *errString) Error() string { return e.s }
 
 func (r *Router) Match(path string) *Route {
 	for i := range r.routes {
@@ -50,14 +55,32 @@ func (r *Router) Match(path string) *Route {
 	return nil
 }
 
-func BuildProxy(up *url.URL) *httputil.ReverseProxy {
+func BuildProxy(up *url.URL, transport http.RoundTripper) *httputil.ReverseProxy {
 	p := httputil.NewSingleHostReverseProxy(up)
+	p.Transport = transport
+
 	orig := p.Director
 	p.Director = func(req *http.Request) {
 		orig(req)
-		// keep original Host? for upstream routing you may want req.Host = up.Host
 		req.Host = up.Host
 	}
+
+	p.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		msg := ""
+		code := http.StatusBadGateway
+		if err != nil {
+			msg = err.Error()
+			if strings.Contains(msg, "request body too large") {
+				code = http.StatusRequestEntityTooLarge
+				msg = "request_too_large"
+			}
+		}
+		w.WriteHeader(code)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"error": msg,
+		})
+	}
+
 	return p
 }
 

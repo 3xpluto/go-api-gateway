@@ -19,7 +19,10 @@ func RequestID(next http.Handler) http.Handler {
 			_, _ = rand.Read(buf)
 			rid = hex.EncodeToString(buf)
 		}
+		// propagate to upstream + client
+		r.Header.Set("X-Request-Id", rid)
 		w.Header().Set("X-Request-Id", rid)
+
 		ctx := context.WithValue(r.Context(), requestIDKey, rid)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

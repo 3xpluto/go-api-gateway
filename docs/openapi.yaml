@@ -1,0 +1,28 @@
+openapi: 3.0.3
+info:
+  title: go-api-gateway
+  version: 0.1.0
+  description: |
+    This project is an API gateway / reverse proxy. It forwards requests to upstream services
+    based on configured path prefixes. The only first-party endpoints are /healthz and /metrics.
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+  /metrics:
+    get:
+      summary: Prometheus metrics
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string

@@ -2,7 +2,6 @@ name: CI
 
 on:
   push:
-    branches: [ "main", "master" ]
   pull_request:
 
 jobs:
@@ -11,14 +10,56 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: "stable"  
+          cache: true
 
-      - name: gofmt
+      - name: Format (gofmt)
         run: |
-          test -z "$(gofmt -l .)"
+          gofmt -w .
+          git diff --exit-code
+
+      - name: Vet
+        run: go vet ./...
 
       - name: Test
-        run: go test ./...
+        run: go test ./... -count=1
+
+      - name: Race (linux)
+        run: go test ./... -race -count=1
+
+      - name: Coverage
+        run: |
+          go test ./... -count=1 -coverpkg=./... -coverprofile=coverage.out
+          go tool cover -func=coverage.out
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.out
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+          cache: true
+
+      - name: Install staticcheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@latest
+
+      - name: Staticcheck
+        run: staticcheck ./...
+
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
+            | sh -s -- -b $(go env GOPATH)/bin v1.60.3
+
+      - name: golangci-lint
+        run: golangci-lint run ./... --timeout=5m

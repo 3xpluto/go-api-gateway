@@ -1,4 +1,54 @@
-/target
-/bin
+# --- Environment files ---
 .env
+.env.*
+!.env.example
+
+# --- Go build outputs ---
+/bin/
+/dist/
+/out/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# --- Go test / coverage ---
+*.test
+*.out
+coverage.out
+coverage.html
+coverage/
+coverage
+
+# --- Logs ---
+*.log
+
+# --- Tooling / vendoring ---
+/vendor/
+
+# --- OS / Editor ---
 .DS_Store
+Thumbs.db
+
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+.idea/
+*.iml
+
+# --- Terraform / infra (if you add later) ---
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
+# --- Node (if you add later) ---
+node_modules/
+
+# --- Local configs ---
+config.local.yaml
+config.local.yml
+*.local.yaml
+*.local.yml
