@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/yourname/apigw/internal/ratelimit"
+	"github.com/3xpluto/go-api-gateway/internal/ratelimit"
 )
 
 type RateLimitConfig struct {

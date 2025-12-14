@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/yourname/apigw/internal/httpx"
+	"github.com/3xpluto/go-api-gateway/internal/httpx"
 )
 
 func AccessLog(log *slog.Logger, next http.Handler) http.Handler {

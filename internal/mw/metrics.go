@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/yourname/apigw/internal/httpx"
+	"github.com/3xpluto/go-api-gateway/internal/httpx"
 )
 
 type Metrics struct {
